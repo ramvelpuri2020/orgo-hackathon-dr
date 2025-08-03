@@ -1,131 +1,278 @@
 "use client"
 
-class ApiService {
-  private delay(ms: number) {
-    return new Promise((resolve) => setTimeout(resolve, ms))
-  }
+interface OrgoConfig {
+  apiKey: string
+  claudeApiKey: string
+  baseUrl: string
+}
 
-  async processTask(input: string): Promise<any> {
-    await this.delay(2000 + Math.random() * 2000)
-
-    if (input.toLowerCase().includes("error")) {
-      throw new Error("Something went wrong processing your request")
-    }
-
-    if (input.toLowerCase().includes("pdf") || input.toLowerCase().includes("document")) {
-      return `📄 **Document Analysis Complete**
-
-**Summary:**
-Your document has been thoroughly analyzed. Here are the key insights:
-
-• **Main Topic:** Quarterly business performance review
-• **Key Metrics:** Revenue up 15%, customer satisfaction at 4.2/5
-• **Pages Processed:** 12 pages with 2,500+ words
-• **Processing Time:** 2.3 seconds
-
-**Key Findings:**
-✅ Strong revenue growth trend
-✅ Improved customer retention rates  
-✅ Operational efficiency gains
-⚠️ Areas for improvement in Q4 planning
-
-**Recommendations:**
-1. Focus on customer retention strategies
-2. Optimize operational workflows
-3. Prepare Q4 growth initiatives
-
-Ready for your next task! 🚀`
-    }
-
-    if (input.toLowerCase().includes("spreadsheet") || input.toLowerCase().includes("report")) {
-      return `📊 **Spreadsheet Report Generated**
-
-**Data Overview:**
-Your report has been created with the following structure:
-
-**Summary Statistics:**
-• Total Records: 1,247 entries
-• Date Range: Q1-Q3 2024
-• Categories: 15 product lines
-• Revenue Total: $125,000
-
-**Key Insights:**
-📈 **Top Performers:**
-   - Product A: +22% growth
-   - Product B: +18% growth
-   - Product C: +15% growth
-
-📉 **Areas of Focus:**
-   - Product X: -5% decline
-   - Product Y: Flat performance
-
-**Charts & Visualizations:**
-✅ Monthly trend analysis
-✅ Category breakdown pie chart
-✅ Growth comparison bar chart
-✅ Pivot tables for deep-dive analysis
-
-Your spreadsheet is ready with interactive charts and filters! 📈`
-    }
-
-    if (input.toLowerCase().includes("email")) {
-      return `✉️ **Professional Email Drafted**
-
-**Subject:** Follow-up on Our Recent Discussion
-
-Hi [Recipient Name],
-
-I hope this message finds you well! I wanted to follow up on our conversation about [specific topic] and provide you with the information we discussed.
-
-**Key Points Covered:**
-• Project timeline and milestones
-• Resource allocation and budget considerations  
-• Next steps and action items
-
-**Attached Documents:**
-📎 Project proposal outline
-📎 Timeline and deliverables
-📎 Budget breakdown
-
-I've incorporated the feedback from our meeting and believe this addresses all the points we covered. Please review at your convenience and let me know if you have any questions or need clarification on any aspect.
-
-**Next Steps:**
-1. Review the attached materials
-2. Schedule follow-up meeting if needed
-3. Confirm project timeline
-
-Looking forward to your thoughts and moving forward together!
-
-Best regards,
-[Your Name]
-
----
-*This email was crafted to be professional, clear, and actionable.* ✨`
-    }
-
-    return `🤖 **Task Completed Successfully**
-
-I've processed your request: "${input}"
-
-**What I Did:**
-✅ Analyzed your request thoroughly
-✅ Applied relevant AI processing
-✅ Generated contextual insights
-✅ Prepared actionable recommendations
-
-**Results:**
-Your task has been completed with high confidence. The analysis shows positive indicators and actionable next steps have been identified.
-
-**Key Insights:**
-• Processing completed in 2.1 seconds
-• Confidence level: 94%
-• Ready for implementation
-
-**What's Next?**
-Feel free to ask follow-up questions or request modifications. I'm here to help refine the results until they meet your exact needs!
-
-Ready for your next challenge! 🚀✨`
+interface OrgoProject {
+  id: string
+  name: string
+  status: string
+  desktop?: {
+    id: string
+    status: string
+    url: string
   }
 }
 
-export const apiService = new ApiService()
+interface OrgoTask {
+  id: string
+  input: string
+  timestamp: Date
+  status: "processing" | "completed" | "error"
+  output?: any
+  error?: string
+}
+
+class OrgoApiService {
+  private config: OrgoConfig
+  private currentProject: OrgoProject | null = null
+
+  constructor() {
+    this.config = {
+      apiKey: process.env.NEXT_PUBLIC_ORGO_API_KEY || "",
+      claudeApiKey: process.env.NEXT_PUBLIC_CLAUDE_API_KEY || "",
+      baseUrl: "https://www.orgo.ai/api", // Call Orgo API directly
+    }
+    
+    // Debug: Check if API key is configured
+    console.log('Orgo API Key configured:', !!this.config.apiKey)
+    console.log('Claude API Key configured:', !!this.config.claudeApiKey)
+    
+    // Try to restore current project from localStorage
+    this.restoreCurrentProject()
+  }
+
+  private restoreCurrentProject() {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('orgo-current-project')
+        if (stored) {
+          this.currentProject = JSON.parse(stored)
+        }
+      } catch (error) {
+        console.warn('Failed to restore current project from localStorage:', error)
+        this.currentProject = null
+      }
+    }
+  }
+
+  private saveCurrentProject() {
+    if (typeof window !== 'undefined' && this.currentProject) {
+      try {
+        localStorage.setItem('orgo-current-project', JSON.stringify(this.currentProject))
+      } catch (error) {
+        console.warn('Failed to save current project to localStorage:', error)
+      }
+    }
+  }
+
+  private clearCurrentProject() {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem('orgo-current-project')
+      } catch (error) {
+        console.warn('Failed to clear current project from localStorage:', error)
+      }
+    }
+    this.currentProject = null
+  }
+
+  private async request(endpoint: string, options: RequestInit = {}): Promise<any> {
+    const url = `${this.config.baseUrl}${endpoint}`
+    console.log(`Making request to: ${url}`)
+    
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${this.config.apiKey}`,
+        ...options.headers,
+      },
+    })
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}))
+      console.error(`API Error for ${url}:`, response.status, response.statusText, error)
+      throw new Error(error.error || `HTTP ${response.status}: ${response.statusText}`)
+    }
+
+    return response.json()
+  }
+
+  async createProject(config: { ram?: number; cpu?: number } = {}): Promise<OrgoProject> {
+    const project = await this.request("/projects", {
+      method: "POST",
+      body: JSON.stringify({
+        config: {
+          ram: config.ram || 2,
+          cpu: config.cpu || 2
+        }
+      })
+    })
+    
+    this.currentProject = project
+    this.saveCurrentProject() // Save the new project
+    return project
+  }
+
+  async getProjects(): Promise<OrgoProject[]> {
+    return this.request("/projects")
+  }
+
+  async getProject(projectId: string): Promise<OrgoProject> {
+    try {
+      return await this.request(`/projects/${projectId}`)
+    } catch (error) {
+      // If the project doesn't exist, clear it from storage
+      if (error instanceof Error && error.message.includes('404')) {
+        console.warn(`Project ${projectId} no longer exists, clearing from storage`)
+        this.clearCurrentProject()
+      }
+      throw error
+    }
+  }
+
+  async startProject(projectId: string): Promise<void> {
+    await this.request(`/projects/${projectId}?action=start`, { method: "POST" })
+  }
+
+  async stopProject(projectId: string): Promise<void> {
+    await this.request(`/projects/${projectId}?action=stop`, { method: "POST" })
+  }
+
+  async restartProject(projectId: string): Promise<void> {
+    await this.request(`/projects/${projectId}?action=restart`, { method: "POST" })
+  }
+
+  async deleteProject(projectId: string): Promise<void> {
+    await this.request(`/projects/${projectId}?action=delete`, { method: "POST" })
+  }
+
+  async takeScreenshot(projectName: string): Promise<{ image: string; metadata: any }> {
+    return this.request(`/computers/${projectName}/screenshot`)
+  }
+
+  async clickMouse(projectName: string, x: number, y: number, options: { button?: string; double?: boolean } = {}): Promise<void> {
+    await this.request(`/computers/${projectName}/click`, {
+      method: "POST",
+      body: JSON.stringify({ x, y, ...options })
+    })
+  }
+
+  async typeText(projectName: string, text: string): Promise<void> {
+    await this.request(`/computers/${projectName}/type`, {
+      method: "POST",
+      body: JSON.stringify({ text })
+    })
+  }
+
+  async pressKey(projectName: string, key: string): Promise<void> {
+    await this.request(`/computers/${projectName}/key`, {
+      method: "POST",
+      body: JSON.stringify({ key })
+    })
+  }
+
+  async scrollPage(projectName: string, x: number, y: number, direction: "up" | "down", amount?: number): Promise<void> {
+    await this.request(`/computers/${projectName}/scroll`, {
+      method: "POST",
+      body: JSON.stringify({ x, y, direction, amount })
+    })
+  }
+
+  async executeBashCommand(projectName: string, command: string): Promise<{ output: string; error?: string }> {
+    console.log(`Executing bash command on ${projectName}:`, command)
+    return this.request(`/computers/${projectName}/bash`, {
+      method: "POST",
+      body: JSON.stringify({ command })
+    })
+  }
+
+  async executePythonCode(projectName: string, code: string, timeout?: number): Promise<{ output: string; error?: string }> {
+    return this.request(`/computers/${projectName}/python`, {
+      method: "POST",
+      body: JSON.stringify({ code, timeout })
+    })
+  }
+
+  async wait(projectName: string, duration: number): Promise<void> {
+    await this.request(`/computers/${projectName}/wait`, {
+      method: "POST",
+      body: JSON.stringify({ duration })
+    })
+  }
+
+  // Universal task processing - accepts ANY command and executes it
+  async processTask(input: string): Promise<string> {
+    if (!this.currentProject) {
+      throw new Error("No active Orgo project. Please create a project first.")
+    }
+
+    const projectName = this.currentProject.name
+    
+    try {
+      // Execute the user's input as a bash command
+      const result = await this.executeBashCommand(projectName, input)
+      
+      return `✅ **Command Executed Successfully**
+
+**Your Command:** "${input}"
+
+**Command Output:**
+\`\`\`
+${result.output || 'Command completed successfully'}
+${result.error ? `\nError: ${result.error}` : ''}
+\`\`\`
+
+**Desktop:** ${projectName}
+**Status:** Ready for more commands! 🚀
+
+**Note:** You can run any bash command, open applications, create files, or perform any desktop operation.`
+    } catch (error) {
+      throw new Error(`Failed to execute command: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+  }
+
+  // Legacy method for backward compatibility
+  async processTaskWithClaude(input: string): Promise<string> {
+    return this.processTask(input)
+  }
+
+  getCurrentProject(): OrgoProject | null {
+    return this.currentProject
+  }
+
+  setCurrentProject(project: OrgoProject): void {
+    this.currentProject = project
+    this.saveCurrentProject() // Save the new project
+  }
+
+  async validateCurrentProject(): Promise<boolean> {
+    if (!this.currentProject) {
+      return false
+    }
+
+    try {
+      await this.getProject(this.currentProject.id)
+      return true
+    } catch (error) {
+      // Project doesn't exist, clear it
+      this.clearCurrentProject()
+      return false
+    }
+  }
+
+  // Check if both API keys are configured
+  isConfigured(): { orgo: boolean; claude: boolean } {
+    return {
+      orgo: !!this.config.apiKey,
+      claude: !!this.config.claudeApiKey
+    }
+  }
+}
+
+export const orgoApiService = new OrgoApiService()
+export const apiService = orgoApiService // For backward compatibility

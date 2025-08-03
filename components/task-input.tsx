@@ -5,9 +5,9 @@ import type React from "react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { Send, Loader2, Sparkles } from "lucide-react"
+import { Send, Loader2, Sparkles, Monitor, FileText, Globe, Settings } from "lucide-react"
 import { useAppStore } from "@/lib/store"
-import { apiService } from "@/lib/api"
+import { orgoApiService } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
 
 export function TaskInput() {
@@ -34,7 +34,17 @@ export function TaskInput() {
     setLoading(true)
 
     try {
-      const response = await apiService.processTask(input.trim())
+      // Check if we have an active project, if not create one
+      let currentProject = orgoApiService.getCurrentProject()
+      if (!currentProject) {
+        toast({
+          title: "Creating Orgo project",
+          description: "Setting up your virtual desktop...",
+        })
+        currentProject = await orgoApiService.createProject()
+      }
+
+      const response = await orgoApiService.processTask(input.trim())
       const completedTask = {
         ...newTask,
         status: "completed" as const,
@@ -62,10 +72,26 @@ export function TaskInput() {
   }
 
   const quickActions = [
-    "Summarize this PDF document",
-    "Create a spreadsheet report",
-    "Analyze quarterly data",
-    "Draft a professional email",
+    {
+      text: "Open Firefox and search for something",
+      icon: <Globe className="h-3 w-3" />,
+      category: "web"
+    },
+    {
+      text: "Create a text file on desktop",
+      icon: <FileText className="h-3 w-3" />,
+      category: "file"
+    },
+    {
+      text: "Take a screenshot",
+      icon: <Monitor className="h-3 w-3" />,
+      category: "system"
+    },
+    {
+      text: "Check system information",
+      icon: <Settings className="h-3 w-3" />,
+      category: "system"
+    }
   ]
 
   return (
@@ -74,16 +100,16 @@ export function TaskInput() {
       <div className="flex flex-wrap gap-2 justify-center">
         {quickActions.map((action, index) => (
           <Button
-            key={action}
+            key={action.text}
             variant="outline"
             size="sm"
-            onClick={() => setInput(action)}
+            onClick={() => setInput(action.text)}
             disabled={loading}
             className="text-xs hover:bg-accent hover:text-accent-foreground transition-all duration-200 hover:scale-105 animate-in fade-in-0 slide-in-from-bottom-2"
             style={{ animationDelay: `${index * 100}ms` }}
           >
-            <Sparkles className="h-3 w-3 mr-1" />
-            {action}
+            {action.icon}
+            <span className="ml-1">{action.text}</span>
           </Button>
         ))}
       </div>
@@ -92,7 +118,7 @@ export function TaskInput() {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="relative group">
           <Textarea
-            placeholder="Describe what you need... (e.g., 'Summarize this PDF', 'Create a report from this data')"
+            placeholder="Describe what you want the AI to do on the desktop... (e.g., 'Open Firefox and search for weather', 'Create a file on desktop')"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             className="min-h-[120px] pr-12 resize-none text-base transition-all duration-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 group-hover:border-accent"
