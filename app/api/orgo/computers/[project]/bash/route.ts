@@ -19,6 +19,10 @@ export async function POST(
     const body = await request.json()
     const { project } = await params
 
+    console.log(`Making request to Orgo API: ${ORGO_BASE_URL}/computers/${project}/bash`)
+    console.log('Request body:', body)
+    console.log('Project name:', project)
+    
     const response = await fetch(`${ORGO_BASE_URL}/computers/${project}/bash`, {
       method: 'POST',
       headers: {
@@ -28,10 +32,24 @@ export async function POST(
       body: JSON.stringify(body),
     })
 
+    console.log('Orgo API response status:', response.status)
+    console.log('Orgo API response headers:', Object.fromEntries(response.headers.entries()))
+    
     if (!response.ok) {
       const error = await response.json().catch(() => ({}))
+      console.error('Orgo API error response:', error)
+      
+      // Provide more specific error messages
+      let errorMessage = error.error || `HTTP ${response.status}: ${response.statusText}`
+      
+      if (response.status === 500) {
+        errorMessage = `Command execution failed. The command may be invalid or the system may be busy. Try a simpler command like 'ls' or 'pwd'.`
+      } else if (response.status === 404) {
+        errorMessage = `Computer not found. The project may have expired. Please create a new project.`
+      }
+      
       return NextResponse.json(
-        { error: error.error || `HTTP ${response.status}: ${response.statusText}` },
+        { error: errorMessage },
         { status: response.status }
       )
     }

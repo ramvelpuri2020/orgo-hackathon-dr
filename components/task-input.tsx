@@ -44,7 +44,10 @@ export function TaskInput() {
         currentProject = await orgoApiService.createProject()
       }
 
+      console.log('Processing task:', input.trim())
       const response = await orgoApiService.processTask(input.trim())
+      console.log('Task completed with response:', response)
+      
       const completedTask = {
         ...newTask,
         status: "completed" as const,

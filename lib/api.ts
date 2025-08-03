@@ -34,7 +34,7 @@ class OrgoApiService {
     this.config = {
       apiKey: process.env.NEXT_PUBLIC_ORGO_API_KEY || "",
       claudeApiKey: process.env.NEXT_PUBLIC_CLAUDE_API_KEY || "",
-      baseUrl: "https://www.orgo.ai/api", // Call Orgo API directly
+      baseUrl: "/api/orgo", // Use local Next.js API routes
     }
     
     // Debug: Check if API key is configured
@@ -84,22 +84,36 @@ class OrgoApiService {
     const url = `${this.config.baseUrl}${endpoint}`
     console.log(`Making request to: ${url}`)
     
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${this.config.apiKey}`,
-        ...options.headers,
-      },
-    })
+    // Add timeout for long-running operations
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 second timeout
+    
+    try {
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal,
+        headers: {
+          "Content-Type": "application/json",
+          ...options.headers,
+        },
+      })
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}))
-      console.error(`API Error for ${url}:`, response.status, response.statusText, error)
-      throw new Error(error.error || `HTTP ${response.status}: ${response.statusText}`)
+      clearTimeout(timeoutId)
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}))
+        console.error(`API Error for ${url}:`, response.status, response.statusText, error)
+        throw new Error(error.error || `HTTP ${response.status}: ${response.statusText}`)
+      }
+
+      return response.json()
+    } catch (error) {
+      clearTimeout(timeoutId)
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error('Request timed out after 30 seconds')
+      }
+      throw error
     }
-
-    return response.json()
   }
 
   async createProject(config: { ram?: number; cpu?: number } = {}): Promise<OrgoProject> {
@@ -112,6 +126,29 @@ class OrgoApiService {
         }
       })
     })
+    
+    console.log('Created project:', project)
+    console.log('Project ID:', project.id)
+    console.log('Project name:', project.name)
+    console.log('Project desktop:', project.desktop)
+    
+    // CRITICAL: Start the project immediately after creation
+    try {
+      console.log('🚀 Starting project...')
+      await this.startProject(project.id)
+      console.log('✅ Project started successfully')
+      
+      // Wait for the project to fully initialize
+      await new Promise(resolve => setTimeout(resolve, 3000))
+      
+      // Verify the project is still active
+      const updatedProject = await this.getProject(project.id)
+      console.log('✅ Project verified and active:', updatedProject)
+      
+    } catch (error) {
+      console.error('❌ Failed to start project:', error)
+      // Don't throw here, the project might already be running
+    }
     
     this.currentProject = project
     this.saveCurrentProject() // Save the new project
@@ -191,15 +228,15 @@ class OrgoApiService {
     })
   }
 
-  async executePythonCode(projectName: string, code: string, timeout?: number): Promise<{ output: string; error?: string }> {
-    return this.request(`/computers/${projectName}/python`, {
+  async executePythonCode(projectId: string, code: string, timeout?: number): Promise<{ output: string; error?: string }> {
+    return this.request(`/computers/${projectId}/python`, {
       method: "POST",
       body: JSON.stringify({ code, timeout })
     })
   }
 
-  async wait(projectName: string, duration: number): Promise<void> {
-    await this.request(`/computers/${projectName}/wait`, {
+  async wait(projectId: string, duration: number): Promise<void> {
+    await this.request(`/computers/${projectId}/wait`, {
       method: "POST",
       body: JSON.stringify({ duration })
     })
@@ -211,13 +248,36 @@ class OrgoApiService {
       throw new Error("No active Orgo project. Please create a project first.")
     }
 
-    const projectName = this.currentProject.name
+    const computerName = this.currentProject.name
+    console.log('Processing task with computer name:', computerName, 'and input:', input)
     
+    // First, test if the project is still active
     try {
-      // Execute the user's input as a bash command
-      const result = await this.executeBashCommand(projectName, input)
-      
-      return `✅ **Command Executed Successfully**
+      await this.validateCurrentProject()
+      console.log('✅ Project is still active')
+    } catch (error) {
+      console.warn('❌ Project validation failed, but continuing...')
+    }
+    
+    // Check if this looks like natural language (not a bash command)
+    const isNaturalLanguage = !input.includes(' ') || 
+                             input.toLowerCase().includes('open') ||
+                             input.toLowerCase().includes('search') ||
+                             input.toLowerCase().includes('find') ||
+                             input.toLowerCase().includes('click') ||
+                             input.toLowerCase().includes('type') ||
+                             input.toLowerCase().includes('go to') ||
+                             input.toLowerCase().includes('navigate');
+    
+    if (isNaturalLanguage) {
+      // Use Claude to convert natural language to bash commands
+      return await this.processWithClaude(input, computerName)
+    } else {
+      // Execute as a direct bash command
+      try {
+        const result = await this.executeBashCommand(computerName, input)
+        
+        return `✅ **Command Executed Successfully**
 
 **Your Command:** "${input}"
 
@@ -227,13 +287,91 @@ ${result.output || 'Command completed successfully'}
 ${result.error ? `\nError: ${result.error}` : ''}
 \`\`\`
 
-**Desktop:** ${projectName}
+**Desktop:** ${computerName}
 **Status:** Ready for more commands! 🚀
 
 **Note:** You can run any bash command, open applications, create files, or perform any desktop operation.`
-    } catch (error) {
-      throw new Error(`Failed to execute command: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+        return `❌ **Command Failed**
+
+**Your Command:** "${input}"
+**Error:** ${errorMessage}
+
+**Try these valid commands instead:**
+- \`ls -la\` - List files
+- \`pwd\` - Show current directory  
+- \`echo "hello"\` - Print text
+- \`firefox https://google.com\` - Open browser
+- \`uname -a\` - System info
+- \`find /home -name "*.txt"\` - Find files
+
+**Desktop:** ${computerName}
+**Status:** Ready for more commands! 🚀`
+      }
     }
+  }
+
+  // Process natural language with Claude
+  async processWithClaude(input: string, computerName: string): Promise<string> {
+    try {
+      // Call Claude API to convert natural language to bash commands
+      const claudeResponse = await this.callClaudeAPI(input)
+      
+      // Execute the converted bash command
+      const result = await this.executeBashCommand(computerName, claudeResponse)
+      
+      return `✅ **Natural Language Command Executed**
+
+**Your Request:** "${input}"
+**Claude Converted To:** "${claudeResponse}"
+
+**Command Output:**
+\`\`\`
+${result.output || 'Command completed successfully'}
+${result.error ? `\nError: ${result.error}` : ''}
+\`\`\`
+
+**Desktop:** ${computerName}
+**Status:** Ready for more commands! 🚀
+
+**Note:** Claude interpreted your natural language request and converted it to a bash command.`
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      return `❌ **Natural Language Processing Failed**
+
+**Your Request:** "${input}"
+**Error:** ${errorMessage}
+
+**Try these instead:**
+- Use direct bash commands like \`ls\`, \`pwd\`, \`firefox https://google.com\`
+- Or make sure your Claude API key is configured
+
+**Desktop:** ${computerName}
+**Status:** Ready for more commands! 🚀`
+    }
+  }
+
+  // Call Claude API to convert natural language to bash commands
+  async callClaudeAPI(input: string): Promise<string> {
+    const response = await fetch('/api/orgo/claude', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ input })
+    })
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}))
+      throw new Error(error.error || `Claude API error: ${response.status}`)
+    }
+
+    const data = await response.json()
+    const bashCommand = data.bashCommand
+    
+    console.log('Claude converted to bash:', bashCommand)
+    return bashCommand
   }
 
   // Legacy method for backward compatibility
@@ -256,12 +394,25 @@ ${result.error ? `\nError: ${result.error}` : ''}
     }
 
     try {
-      await this.getProject(this.currentProject.id)
+      const project = await this.getProject(this.currentProject.id)
+      console.log('✅ Project validation successful:', project)
+      
+      // Update the current project with fresh data
+      this.currentProject = project
+      this.saveCurrentProject()
+      
       return true
     } catch (error) {
-      // Project doesn't exist, clear it
-      this.clearCurrentProject()
-      return false
+      console.warn('❌ Project validation failed:', error)
+      // Only clear if it's a 404 (project doesn't exist)
+      if (error instanceof Error && error.message.includes('404')) {
+        console.warn('Project no longer exists, clearing from storage')
+        this.clearCurrentProject()
+        return false
+      }
+      // For other errors (network, etc.), don't clear the project
+      // Just return true to continue with the current project
+      return true
     }
   }
 
