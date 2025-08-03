@@ -18,9 +18,11 @@ export function OutputDisplay() {
     toast({ title: "Copied to clipboard!" })
   }
 
-  const formatOutput = (output: any) => {
+  const formatOutput = (output: string | object) => {
     if (typeof output === "string") return output
-    if (output?.content) return output.content
+    if (typeof output === "object" && output && 'content' in output) {
+      return (output as { content: string }).content
+    }
     return JSON.stringify(output, null, 2)
   }
 
@@ -39,7 +41,9 @@ export function OutputDisplay() {
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="secondary" className="animate-in fade-in-0 duration-300">
-            {currentTask.timestamp.toLocaleTimeString()}
+            {currentTask.timestamp instanceof Date
+              ? currentTask.timestamp.toLocaleTimeString()
+              : new Date(currentTask.timestamp).toLocaleTimeString()}
           </Badge>
           <Button
             variant="ghost"
@@ -69,7 +73,7 @@ export function OutputDisplay() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => copyToClipboard(formatOutput(currentTask.output))}
+              onClick={() => copyToClipboard(formatOutput(currentTask.output || ''))}
               className="hover:bg-accent transition-all duration-200 hover:scale-105"
             >
               <Copy className="h-3 w-3 mr-1" />

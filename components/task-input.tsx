@@ -25,8 +25,9 @@ export function TaskInput() {
       input: input.trim(),
       timestamp: new Date(),
       status: "processing" as const,
-      output: null,
+      output: undefined,
       error: null,
+      screenshots: [],
     }
 
     addTask(newTask)
@@ -38,7 +39,9 @@ export function TaskInput() {
       const completedTask = {
         ...newTask,
         status: "completed" as const,
-        output: response,
+        output: response.output,
+        screenshots: response.screenshots,
+        projectId: response.projectId,
       }
       addTask(completedTask)
       setCurrentTask(completedTask)
@@ -47,6 +50,7 @@ export function TaskInput() {
         ...newTask,
         status: "error" as const,
         error: error instanceof Error ? error.message : "Something went wrong",
+        output: undefined,
       }
       addTask(errorTask)
       setCurrentTask(errorTask)
@@ -62,10 +66,10 @@ export function TaskInput() {
   }
 
   const quickActions = [
-    "Summarize this PDF document",
-    "Create a spreadsheet report",
-    "Analyze quarterly data",
-    "Draft a professional email",
+    "Open Firefox and search for weather",
+    "Create a text file with today's date",
+    "Take a screenshot of the desktop",
+    "Open a web browser and go to google.com",
   ]
 
   return (
@@ -92,7 +96,7 @@ export function TaskInput() {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="relative group">
           <Textarea
-            placeholder="Describe what you need... (e.g., 'Summarize this PDF', 'Create a report from this data')"
+            placeholder="Describe what you need... (e.g., 'Open Firefox and search for weather', 'Create a text file with today's date')"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             className="min-h-[120px] pr-12 resize-none text-base transition-all duration-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 group-hover:border-accent"

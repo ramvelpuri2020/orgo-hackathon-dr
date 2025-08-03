@@ -21,7 +21,11 @@ export function TaskHistory() {
     }
   }
 
-  const sortedTasks = [...tasks].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+  const sortedTasks = [...tasks].sort((a, b) => {
+    const dateA = a.timestamp instanceof Date ? a.timestamp : new Date(a.timestamp)
+    const dateB = b.timestamp instanceof Date ? b.timestamp : new Date(b.timestamp)
+    return dateB.getTime() - dateA.getTime()
+  })
 
   if (tasks.length === 0) {
     return (
@@ -47,7 +51,11 @@ export function TaskHistory() {
             <div className="flex flex-col gap-2 w-full">
               <div className="flex items-center gap-2">
                 {getStatusIcon(task.status)}
-                <span className="text-xs text-muted-foreground">{task.timestamp.toLocaleTimeString()}</span>
+                <span className="text-xs text-muted-foreground">
+                  {task.timestamp instanceof Date 
+                    ? task.timestamp.toLocaleTimeString() 
+                    : new Date(task.timestamp).toLocaleTimeString()}
+                </span>
               </div>
               <p className="text-sm truncate leading-relaxed">{task.input}</p>
             </div>
