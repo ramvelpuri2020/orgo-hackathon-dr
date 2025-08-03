@@ -37,9 +37,7 @@ class OrgoApiService {
       baseUrl: "/api/orgo", // Use local Next.js API routes
     }
     
-    // Debug: Check if API key is configured
-    console.log('Orgo API Key configured:', !!this.config.apiKey)
-    console.log('Claude API Key configured:', !!this.config.claudeApiKey)
+    // API keys configured
     
     // Try to restore current project from localStorage
     this.restoreCurrentProject()
@@ -82,38 +80,22 @@ class OrgoApiService {
 
   private async request(endpoint: string, options: RequestInit = {}): Promise<any> {
     const url = `${this.config.baseUrl}${endpoint}`
-    console.log(`Making request to: ${url}`)
     
-    // Add timeout for long-running operations
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 second timeout
-    
-    try {
-      const response = await fetch(url, {
-        ...options,
-        signal: controller.signal,
-        headers: {
-          "Content-Type": "application/json",
-          ...options.headers,
-        },
-      })
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    })
 
-      clearTimeout(timeoutId)
-
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}))
-        console.error(`API Error for ${url}:`, response.status, response.statusText, error)
-        throw new Error(error.error || `HTTP ${response.status}: ${response.statusText}`)
-      }
-
-      return response.json()
-    } catch (error) {
-      clearTimeout(timeoutId)
-      if (error instanceof Error && error.name === 'AbortError') {
-        throw new Error('Request timed out after 30 seconds')
-      }
-      throw error
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}))
+      console.error(`API Error for ${url}:`, response.status, response.statusText, error)
+      throw new Error(error.error || `HTTP ${response.status}: ${response.statusText}`)
     }
+
+    return response.json()
   }
 
   async createProject(config: { ram?: number; cpu?: number } = {}): Promise<OrgoProject> {
@@ -127,23 +109,17 @@ class OrgoApiService {
       })
     })
     
-    console.log('Created project:', project)
-    console.log('Project ID:', project.id)
-    console.log('Project name:', project.name)
-    console.log('Project desktop:', project.desktop)
+    // Project created successfully
     
     // CRITICAL: Start the project immediately after creation
     try {
-      console.log('🚀 Starting project...')
       await this.startProject(project.id)
-      console.log('✅ Project started successfully')
       
       // Wait for the project to fully initialize
       await new Promise(resolve => setTimeout(resolve, 3000))
       
       // Verify the project is still active
       const updatedProject = await this.getProject(project.id)
-      console.log('✅ Project verified and active:', updatedProject)
       
     } catch (error) {
       console.error('❌ Failed to start project:', error)
@@ -221,7 +197,6 @@ class OrgoApiService {
   }
 
   async executeBashCommand(projectName: string, command: string): Promise<{ output: string; error?: string }> {
-    console.log(`Executing bash command on ${projectName}:`, command)
     return this.request(`/computers/${projectName}/bash`, {
       method: "POST",
       body: JSON.stringify({ command })
@@ -249,12 +224,10 @@ class OrgoApiService {
     }
 
     const computerName = this.currentProject.name
-    console.log('Processing task with computer name:', computerName, 'and input:', input)
     
     // First, test if the project is still active
     try {
       await this.validateCurrentProject()
-      console.log('✅ Project is still active')
     } catch (error) {
       console.warn('❌ Project validation failed, but continuing...')
     }
@@ -370,7 +343,6 @@ ${result.error ? `\nError: ${result.error}` : ''}
     const data = await response.json()
     const bashCommand = data.bashCommand
     
-    console.log('Claude converted to bash:', bashCommand)
     return bashCommand
   }
 
@@ -395,7 +367,6 @@ ${result.error ? `\nError: ${result.error}` : ''}
 
     try {
       const project = await this.getProject(this.currentProject.id)
-      console.log('✅ Project validation successful:', project)
       
       // Update the current project with fresh data
       this.currentProject = project

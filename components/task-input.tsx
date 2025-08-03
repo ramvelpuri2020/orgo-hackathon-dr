@@ -25,8 +25,8 @@ export function TaskInput() {
       input: input.trim(),
       timestamp: new Date(),
       status: "processing" as const,
-      output: null,
-      error: null,
+      output: undefined,
+      error: undefined,
     }
 
     addTask(newTask)
@@ -52,6 +52,7 @@ export function TaskInput() {
         ...newTask,
         status: "completed" as const,
         output: response,
+        error: undefined,
       }
       addTask(completedTask)
       setCurrentTask(completedTask)

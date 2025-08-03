@@ -11,7 +11,6 @@ import { useAppStore } from "@/lib/store"
 import { orgoApiService } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
 import { TaskOutput } from "@/components/task-output"
-import { OrgoStatus } from "@/components/orgo-status"
 import { ApiSetup } from "@/components/api-setup"
 
 export function MainInterface() {
@@ -74,6 +73,7 @@ export function MainInterface() {
         ...newTask,
         status: "completed" as const,
         output: response,
+        error: undefined,
       }
       addTask(completedTask)
       setCurrentTask(completedTask)
@@ -172,7 +172,6 @@ export function MainInterface() {
           </div>
 
           <div className="flex items-center gap-2">
-            <OrgoStatus />
             <Button
               variant="ghost"
               size="icon"

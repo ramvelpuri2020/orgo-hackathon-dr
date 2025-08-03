@@ -4,7 +4,6 @@ import { Bot, History, Plus } from "lucide-react"
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { TaskHistory } from "@/components/task-history"
-import { OrgoStatus } from "@/components/orgo-status"
 import { useAppStore } from "@/lib/store"
 
 export function AppSidebar() {
@@ -49,7 +48,7 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="border-t p-4">
-        <OrgoStatus />
+        {/* OrgoStatus removed */}
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

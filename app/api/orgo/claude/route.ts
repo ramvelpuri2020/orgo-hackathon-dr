@@ -12,8 +12,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('Converting natural language to bash:', input)
-
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -54,8 +52,6 @@ Bash command:`
 
     const data = await response.json()
     const bashCommand = data.content[0].text.trim()
-    
-    console.log('Claude converted to bash:', bashCommand)
     
     return NextResponse.json({ bashCommand })
   } catch (error) {
