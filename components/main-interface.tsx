@@ -185,8 +185,8 @@ export function MainInterface() {
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 container max-w-4xl mx-auto p-6 space-y-6">
+             {/* Main Content */}
+       <main className="flex-1 container max-w-4xl mx-auto p-6 space-y-4">
         {/* Task Output */}
         {currentTask && <TaskOutput task={currentTask} />}
 

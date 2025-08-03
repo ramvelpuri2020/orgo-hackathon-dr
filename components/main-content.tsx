@@ -13,15 +13,15 @@ export function MainContent() {
     <SidebarInset className="flex flex-col">
       <TopNavbar />
       <main className="flex-1 flex flex-col">
-        <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full p-6 space-y-6">
+        <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full p-6 space-y-4">
           {/* Welcome Section */}
           {!currentTask && (
-            <div className="text-center space-y-6 py-12 animate-in fade-in-0 slide-in-from-bottom-4 duration-700">
-              <div className="space-y-3">
-                <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-gray-900 to-gray-600 dark:from-gray-100 dark:to-gray-400 bg-clip-text text-transparent">
+            <div className="text-center space-y-4 py-6 animate-in fade-in-0 slide-in-from-bottom-4 duration-700">
+              <div className="space-y-2">
+                <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-gray-900 to-gray-600 dark:from-gray-100 dark:to-gray-400 bg-clip-text text-transparent">
                   What can I help you with?
                 </h1>
-                <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+                <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
                   Just describe what you need in plain English and I'll take care of it
                 </p>
               </div>
