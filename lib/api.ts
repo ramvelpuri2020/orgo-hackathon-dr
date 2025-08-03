@@ -80,10 +80,19 @@ I hope this message finds you well! I wanted to follow up on our conversation ab
 **Key Points Covered:**
 • Project timeline and milestones
 • Resource allocation and budget considerations  
-• Next Steps:
-  1. Review the attached materials
-  2. Schedule follow-up meeting if needed
-  3. Confirm project timeline
+• Next steps and action items
+
+**Attached Documents:**
+📎 Project proposal outline
+📎 Timeline and deliverables
+📎 Budget breakdown
+
+I've incorporated the feedback from our meeting and believe this addresses all the points we covered. Please review at your convenience and let me know if you have any questions or need clarification on any aspect.
+
+**Next Steps:**
+1. Review the attached materials
+2. Schedule follow-up meeting if needed
+3. Confirm project timeline
 
 Looking forward to your thoughts and moving forward together!
 

@@ -95,14 +95,14 @@ export function TaskInput() {
             placeholder="Describe what you need... (e.g., 'Summarize this PDF', 'Create a report from this data')"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            className="min-h-[120px] pr-12 resize-none text-base transition-all duration-200 focus:ring-2 focus:ring-foreground/20 focus:border-foreground/50 group-hover:border-accent"
+            className="min-h-[120px] pr-12 resize-none text-base transition-all duration-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 group-hover:border-accent"
             disabled={loading}
           />
           <Button
             type="submit"
             size="icon"
             disabled={!input.trim() || loading}
-            className="absolute bottom-3 right-3 h-8 w-8 bg-foreground text-background hover:bg-foreground/90 shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
+            className="absolute bottom-3 right-3 h-8 w-8 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
           >
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           </Button>
@@ -113,16 +113,13 @@ export function TaskInput() {
         <div className="flex items-center justify-center py-4 animate-in fade-in-0 duration-300">
           <div className="flex items-center gap-3 text-muted-foreground">
             <div className="flex space-x-1">
+              <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></div>
               <div
-                className="w-2 h-2 bg-foreground rounded-full animate-bounce"
-                style={{ animationDelay: "0ms" }}
-              ></div>
-              <div
-                className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"
+                className="w-2 h-2 bg-purple-500 rounded-full animate-bounce"
                 style={{ animationDelay: "150ms" }}
               ></div>
               <div
-                className="w-2 h-2 bg-foreground rounded-full animate-bounce"
+                className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"
                 style={{ animationDelay: "300ms" }}
               ></div>
             </div>

@@ -11,13 +11,13 @@ export function TaskHistory() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "completed":
-        return <CheckCircle className="h-3 w-3 text-foreground" />
+        return <CheckCircle className="h-3 w-3 text-green-500" />
       case "error":
-        return <XCircle className="h-3 w-3 text-foreground" />
+        return <XCircle className="h-3 w-3 text-red-500" />
       case "processing":
-        return <Loader2 className="h-3 w-3 animate-spin text-foreground" />
+        return <Loader2 className="h-3 w-3 animate-spin text-blue-500" />
       default:
-        return <Clock className="h-3 w-3 text-muted-foreground" />
+        return <Clock className="h-3 w-3 text-gray-500" />
     }
   }
 

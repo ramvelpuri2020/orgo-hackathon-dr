@@ -31,10 +31,10 @@ export function OutputDisplay() {
         <div className="flex items-center gap-3">
           <h2 className="text-2xl font-semibold">Task Result</h2>
           {currentTask.status === "completed" && (
-            <CheckCircle className="h-5 w-5 text-foreground animate-in zoom-in-50 duration-300" />
+            <CheckCircle className="h-5 w-5 text-green-500 animate-in zoom-in-50 duration-300" />
           )}
           {currentTask.status === "error" && (
-            <XCircle className="h-5 w-5 text-foreground animate-in zoom-in-50 duration-300" />
+            <XCircle className="h-5 w-5 text-red-500 animate-in zoom-in-50 duration-300" />
           )}
         </div>
         <div className="flex items-center gap-2">
@@ -80,7 +80,7 @@ export function OutputDisplay() {
 
         <Card className="p-6 transition-all duration-200 hover:shadow-md">
           {currentTask.status === "error" ? (
-            <div className="text-foreground animate-in fade-in-0 duration-300">
+            <div className="text-red-600 dark:text-red-400 animate-in fade-in-0 duration-300">
               <p className="font-medium">Oops! Something went wrong</p>
               <p className="text-sm mt-2 opacity-80">{currentTask.error}</p>
             </div>
@@ -95,15 +95,15 @@ export function OutputDisplay() {
               <div className="text-center space-y-3">
                 <div className="flex justify-center space-x-1">
                   <div
-                    className="w-3 h-3 bg-foreground rounded-full animate-bounce"
+                    className="w-3 h-3 bg-blue-500 rounded-full animate-bounce"
                     style={{ animationDelay: "0ms" }}
                   ></div>
                   <div
-                    className="w-3 h-3 bg-muted-foreground rounded-full animate-bounce"
+                    className="w-3 h-3 bg-purple-500 rounded-full animate-bounce"
                     style={{ animationDelay: "150ms" }}
                   ></div>
                   <div
-                    className="w-3 h-3 bg-foreground rounded-full animate-bounce"
+                    className="w-3 h-3 bg-blue-500 rounded-full animate-bounce"
                     style={{ animationDelay: "300ms" }}
                   ></div>
                 </div>

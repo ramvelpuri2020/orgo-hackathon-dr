@@ -14,11 +14,13 @@ export function AppSidebar() {
     <Sidebar variant="inset" className="border-r transition-all duration-300">
       <SidebarHeader className="border-b px-4 py-4">
         <div className="flex items-center gap-3 animate-in fade-in-0 slide-in-from-left-5 duration-500">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-foreground text-background shadow-lg">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-lg">
             <Bot className="h-5 w-5" />
           </div>
           <div className="flex flex-col">
-            <span className="text-lg font-bold text-foreground">OrgoGPT</span>
+            <span className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              OrgoGPT
+            </span>
             <span className="text-xs text-muted-foreground">AI Assistant</span>
           </div>
         </div>
@@ -29,7 +31,7 @@ export function AppSidebar() {
           <div className="px-2">
             <Button
               onClick={clearCurrentTask}
-              className="w-full justify-start gap-2 bg-foreground text-background hover:bg-foreground/90 shadow-md hover:shadow-lg transition-all duration-200 hover:scale-[1.02]"
+              className="w-full justify-start gap-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-md hover:shadow-lg transition-all duration-200 hover:scale-[1.02]"
             >
               <Plus className="h-4 w-4" />
               New Task

@@ -21,20 +21,20 @@ export function OrgoStatus() {
     switch (status) {
       case "online":
         return {
-          color: "bg-muted text-foreground",
-          icon: <Circle className="h-2 w-2 fill-foreground text-foreground" />,
+          color: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
+          icon: <Circle className="h-2 w-2 fill-green-500 text-green-500" />,
           text: "Online",
         }
       case "launching":
         return {
-          color: "bg-muted text-foreground",
-          icon: <Circle className="h-2 w-2 fill-muted-foreground text-muted-foreground animate-pulse" />,
+          color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
+          icon: <Circle className="h-2 w-2 fill-yellow-500 text-yellow-500 animate-pulse" />,
           text: "Starting",
         }
       case "offline":
         return {
-          color: "bg-muted text-foreground",
-          icon: <Circle className="h-2 w-2 fill-foreground text-foreground" />,
+          color: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
+          icon: <Circle className="h-2 w-2 fill-red-500 text-red-500" />,
           text: "Offline",
         }
     }
