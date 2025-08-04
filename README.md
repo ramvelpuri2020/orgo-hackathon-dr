@@ -4,7 +4,7 @@ A modern web interface for interacting with Orgo's AI computer use platform. Thi
 
 ## Important: Use the Latest Branch
 
-For the latest enhanced features, switch to the `fixes-branch`:
+For the latest app, switch to the `fixes-branch`:
 ```bash
 git checkout fixes-branch
 ```
